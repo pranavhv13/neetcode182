@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neetcode182 progress tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --panel: #12181f;
+      --panel-2: #18212a;
+      --border: #26303b;
+      --border-soft: #1b2430;
+      --text: #e6edf3;
+      --text-dim: #9aa4af;
+      --text-faint: #66717d;
+      --blue: #58a6ff;
+      --green: #3fb950;
+      --green-dim: #2ea043;
+      --amber: #d29922;
+      --red: #f85149;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+      --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --shadow: 0 18px 50px rgba(0,0,0,.28);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(900px 500px at 8% -10%, rgba(63, 185, 80, 0.08), transparent 60%),
+        radial-gradient(900px 500px at 100% 0%, rgba(88, 166, 255, 0.08), transparent 58%),
+        var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    ::selection { background: rgba(88, 166, 255, 0.28); }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 18px 28px;
+      background: rgba(13, 17, 23, 0.86);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border-soft);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 14px rgba(63, 185, 80, 0.8);
+      flex: none;
+    }
+    .search {
+      flex: 1;
+      max-width: 520px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel-2);
+    }
+    .search input {
+      width: 100%;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      font: 500 16px var(--sans);
+    }
+    .search input::placeholder { color: var(--text-faint); }
+    .pillrow { display: flex; gap: 8px; flex-wrap: wrap; }
+    .pill {
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text-dim);
+      border-radius: 999px;
+      padding: 9px 14px;
+      cursor: pointer;
+      user-select: none;
+      transition: .16s ease;
+      font: 700 13px var(--mono);
+    }
+    .pill:hover { border-color: #3b4958; color: var(--text); }
+    .pill.active { color: #08131d; }
+    .pill.active.easy { background: var(--green); border-color: var(--green); }
+    .pill.active.medium { background: var(--amber); border-color: var(--amber); }
+    .pill.active.hard { background: var(--red); border-color: var(--red); }
+    .pill.active.all { background: var(--blue); border-color: var(--blue); }
+    .page {
+      max-width: 1560px;
+      margin: 0 auto;
+      padding: 28px 24px 72px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 24px;
+      align-items: start;
+    }
+    .main-col { min-width: 0; }
+    .hero {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)), var(--panel);
+      border: 1px solid var(--border-soft);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      margin-bottom: 22px;
+    }
+    .ring-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .hero-title {
+      font: 700 13px var(--mono);
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+    .ring { position: relative; width: 182px; height: 182px; }
+    .ring svg { transform: rotate(-90deg); }
+    .ring-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .ring-pct { font: 800 34px var(--mono); letter-spacing: -0.05em; }
+    .ring-sub { margin-top: 4px; font: 600 13px var(--mono); color: var(--text-dim); }
+    .hero-copy { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+    .hero-heading {
+      margin: 0;
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+    }
+    .stat-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .stat-card {
+      background: var(--panel-2);
+      border: 1px solid var(--border-soft);
+      border-radius: 14px;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .stat-card .num { font: 800 30px var(--mono); letter-spacing: -0.04em; }
+    .stat-card .lbl {
+      color: var(--text-dim);
+      font: 700 12px var(--mono);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .diffbars { display: flex; flex-direction: column; gap: 10px; margin-top: 2px; }
+    .diffbar-row { display: flex; align-items: center; gap: 12px; }
+    .diffbar-row .tag { width: 74px; font: 700 13px var(--mono); }
+    .diffbar-track {
+      flex: 1;
+      height: 9px;
+      border-radius: 999px;
+      background: var(--border-soft);
+      overflow: hidden;
+    }
+    .diffbar-fill { height: 100%; border-radius: 999px; }
+    .diffbar-count {
+      width: 78px;
+      text-align: right;
+      color: var(--text-dim);
+      font: 600 12px var(--mono);
+    }
+    .section-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 24px 0 12px;
+      color: var(--text-dim);
+      font: 700 13px var(--mono);
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-soft);
+    }
+    .topic-sidebar {
+      position: sticky;
+      top: 92px;
+      align-self: start;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)), var(--panel);
+      border: 1px solid var(--border-soft);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      max-height: calc(100vh - 112px);
+      overflow: auto;
+    }
+    .sidebar-title {
+      margin: 0 0 14px;
+      font: 800 14px var(--mono);
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .topic-list { display: flex; flex-direction: column; gap: 10px; }
+    .topic-link {
+      display: block;
+      padding: 12px 12px 11px;
+      border: 1px solid var(--border-soft);
+      border-radius: 12px;
+      background: var(--panel-2);
+      transition: .16s ease;
+    }
+    .topic-link:hover { border-color: #3a4d61; transform: translateY(-1px); }
+    .topic-link.done-all { border-color: rgba(63,185,80,.4); }
+    .topic-link .tname {
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 8px;
+    }
+    .topic-link .tmeta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-dim);
+      font: 600 12px var(--mono);
+      margin-top: 8px;
+    }
+    .topic-track {
+      height: 7px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--border-soft);
+    }
+    .topic-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--green-dim), var(--green));
+      border-radius: 999px;
+    }
+    details.topic-group {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0)), var(--panel);
+      border: 1px solid var(--border-soft);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+    }
+    details.topic-group summary {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      cursor: pointer;
+      user-select: none;
+    }
+    details.topic-group summary::-webkit-details-marker { display: none; }
+    .chev {
+      color: var(--text-faint);
+      font: 700 14px var(--mono);
+      transition: transform .15s ease;
+      flex: none;
+    }
+    details[open] .chev { transform: rotate(90deg); }
+    summary .name {
+      flex: none;
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    summary .mini-track {
+      flex: 1;
+      max-width: 260px;
+      height: 7px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--border-soft);
+    }
+    summary .mini-fill { height: 100%; background: linear-gradient(90deg, var(--green-dim), var(--green)); }
+    summary .count { flex: none; color: var(--text-dim); font: 700 13px var(--mono); }
+    .prob-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 18px;
+      border-top: 1px solid var(--border-soft);
+      font-size: 15.5px;
+    }
+    .prob-row:hover { background: rgba(255,255,255,0.02); }
+    .prob-row.hide { display: none; }
+    .chk {
+      width: 21px;
+      height: 21px;
+      border-radius: 6px;
+      border: 1.8px solid #d0d7de;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      cursor: pointer;
+      transition: .16s ease;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+    .chk:hover { border-color: #f0f6fc; }
+    .chk.checked { background: var(--green); border-color: #9be9a8; }
+    .chk.checked::after {
+      content: '✓';
+      color: #07160a;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .diffdot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+    .diffdot.Easy { background: var(--green); }
+    .diffdot.Medium { background: var(--amber); }
+    .diffdot.Hard { background: var(--red); }
+    .prob-name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 600;
+    }
+    .prob-name.done {
+      color: var(--text-dim);
+      text-decoration: line-through;
+      text-decoration-color: var(--text-faint);
+    }
+    .links {
+      display: flex;
+      gap: 8px;
+      flex: none;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .linkbtn {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-dim);
+      padding: 6px 10px;
+      font: 700 11.5px var(--mono);
+      transition: .16s ease;
+    }
+    .linkbtn.lc {
+      color: #ffb86b;
+      border-color: rgba(255, 184, 107, 0.38);
+      background: rgba(255, 140, 40, 0.08);
+    }
+    .linkbtn.lc:hover {
+      color: #ffd09a;
+      border-color: #ffb86b;
+      background: rgba(255, 140, 40, 0.16);
+    }
+    .linkbtn.sol {
+      color: #c7a6ff;
+      border-color: rgba(199, 166, 255, 0.34);
+      background: rgba(143, 92, 255, 0.08);
+    }
+    .linkbtn.sol:hover {
+      color: #e0cbff;
+      border-color: #b58cff;
+      background: rgba(143, 92, 255, 0.16);
+    }
+    .empty-state, .loading {
+      text-align: center;
+      padding: 76px 20px;
+      color: var(--text-dim);
+      font: 700 16px var(--mono);
+    }
+    .err {
+      margin-bottom: 16px;
+      border: 1px solid rgba(248,81,73,.34);
+      background: rgba(248,81,73,.12);
+      color: #ffb4ae;
+      border-radius: 12px;
+      padding: 15px 18px;
+      font: 600 14px var(--mono);
+    }
+    .muted-note { color: var(--text-dim); font-size: 14px; line-height: 1.55; }
+    @media (max-width: 1160px) {
+      .page { grid-template-columns: 1fr; }
+      .topic-sidebar { position: static; max-height: none; order: -1; }
+      .topic-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    }
+    @media (max-width: 760px) {
+      .topbar { flex-wrap: wrap; padding: 16px 16px; }
+      .brand { font-size: 18px; }
+      .search { max-width: none; width: 100%; }
+      .page { padding: 18px 14px 44px; }
+      .hero { grid-template-columns: 1fr; padding: 20px; }
+      .stat-grid { grid-template-columns: 1fr; }
+      summary .name { font-size: 17px; min-width: 0; }
+      summary .mini-track { display: none; }
+      .prob-row { flex-wrap: wrap; align-items: flex-start; }
+      .links { width: 100%; justify-content: flex-start; padding-left: 42px; }
+      .prob-name { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span>neetcode182</div>
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M21 21l-4.3-4.3"></path>
+      </svg>
+      <input id="searchInput" type="text" placeholder="Search a problem" />
+    </div>
+    <div class="pillrow" id="diffPills">
+      <div class="pill active all" data-diff="all">All</div>
+      <div class="pill easy" data-diff="Easy">Easy</div>
+      <div class="pill medium" data-diff="Medium">Medium</div>
+      <div class="pill hard" data-diff="Hard">Hard</div>
+    </div>
+  </div>
+  <div class="page">
+    <main class="main-col">
+      <div id="alertBox"></div>
+      <div id="app" class="loading">loading your sheet...</div>
+    </main>
+    <aside class="topic-sidebar">
+      <h2 class="sidebar-title">Topics</h2>
+      <div id="topicSidebar" class="topic-list">
+        <div class="muted-note">Topics will appear after the sheet loads.</div>
+      </div>
+    </aside>
+  </div>
+  <script>
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzIFnm0E0t3yyoOLd94uVogUVU1I-dBwsnC_oGXYyaY5aTbKtLw-grLYJ4yeMnOnZ-FVQ/exec';
+    let ALL = [];
+    const filters = { diff: 'all', q: '' };
+    const DIFF_COLOR = { Easy: 'var(--green)', Medium: 'var(--amber)', Hard: 'var(--red)' };
+
+    async function boot() {
+      const app = document.getElementById('app');
+      try {
+        const res = await fetch(SCRIPT_URL + '?action=list');
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || 'Unknown error from sheet');
+        ALL = json.data.map(normalize);
+        render();
+      } catch (err) {
+        app.className = '';
+        app.innerHTML = '<div class="err">Couldn\'t load the sheet: ' + escapeHtml(err.message) + '.</div>';
+      }
+    }
+
+    function normalize(row) {
+      return {
+        id: Number(row.id),
+        done: !!row.done,
+        topic: row.topic || '',
+        problem: row.problem || '',
+        difficulty: row.difficulty || '',
+        list: String(row.list || ''),
+        leetcode: row.leetcode || '#',
+        neetcode: row.neetcode || '#',
+        solution: row.solution || '#',
+        dateCompleted: row.dateCompleted || ''
+      };
+    }
+
+    function passesFilter(r) {
+      if (filters.diff !== 'all' && r.difficulty !== filters.diff) return false;
+      if (filters.q && !r.problem.toLowerCase().includes(filters.q)) return false;
+      return true;
+    }
+
+    function render(openIds = null) {
+      const app = document.getElementById('app');
+      app.className = '';
+      app.innerHTML = '';
+      app.appendChild(buildHero());
+      app.appendChild(sectionLabel('Problems'));
+      app.appendChild(buildProblemList(openIds));
+      renderSidebar();
+    }
+
+    function buildHero() {
+      const total = ALL.length;
+      const done = ALL.filter(r => r.done).length;
+      const remaining = total - done;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      const R = 80;
+      const C = 2 * Math.PI * R;
+      const dash = C * pct / 100;
+      const hero = document.createElement('div');
+      hero.className = 'hero';
+      hero.innerHTML = `
+        <div class="ring-wrap">
+          <div class="hero-title">OVERALL</div>
+          <div class="ring">
+            <svg width="182" height="182" aria-hidden="true">
+              <circle cx="91" cy="91" r="${R}" stroke="var(--border-soft)" stroke-width="12" fill="none"></circle>
+              <circle cx="91" cy="91" r="${R}" stroke="var(--green)" stroke-width="12" fill="none" stroke-dasharray="${dash} ${C - dash}" stroke-linecap="round"></circle>
+            </svg>
+            <div class="ring-label">
+              <div class="ring-pct">${pct}%</div>
+              <div class="ring-sub">${done} / ${total} solved</div>
+            </div>
+          </div>
+        </div>
+        <div class="hero-copy">
+          <div class="stat-grid">
+            <div class="stat-card"><div class="num">${done}</div><div class="lbl">Solved</div></div>
+            <div class="stat-card"><div class="num">${remaining}</div><div class="lbl">Remaining</div></div>
+            <div class="stat-card"><div class="num">${total}</div><div class="lbl">Total Problems</div></div>
+          </div>
+          <div class="diffbars">
+            ${['Easy','Medium','Hard'].map(diffBarRow).join('')}
+          </div>
+        </div>
+      `;
+      return hero;
+    }
+
+    function diffBarRow(d) {
+      const rows = ALL.filter(r => r.difficulty === d);
+      const done = rows.filter(r => r.done).length;
+      const total = rows.length || 1;
+      const pct = Math.round((done / total) * 100);
+      return `
+        <div class="diffbar-row">
+          <div class="tag" style="color:${DIFF_COLOR[d]}">${d}</div>
+          <div class="diffbar-track"><div class="diffbar-fill" style="width:${pct}%; background:${DIFF_COLOR[d]}"></div></div>
+          <div class="diffbar-count">${done}/${rows.length}</div>
+        </div>
+      `;
+    }
+
+    function sectionLabel(text) {
+      const el = document.createElement('div');
+      el.className = 'section-label';
+      el.textContent = text;
+      return el;
+    }
+
+    function groupByTopic(rows) {
+      const order = [];
+      const map = {};
+      rows.forEach(r => {
+        if (!map[r.topic]) {
+          map[r.topic] = [];
+          order.push(r.topic);
+        }
+        map[r.topic].push(r);
+      });
+      return order.map(topic => ({ topic, rows: map[topic] }));
+    }
+
+    function renderSidebar() {
+      const side = document.getElementById('topicSidebar');
+      side.innerHTML = '';
+      groupByTopic(ALL).forEach(g => {
+        const done = g.rows.filter(r => r.done).length;
+        const total = g.rows.length;
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        const a = document.createElement('a');
+        a.href = '#grp-' + slug(g.topic);
+        a.className = 'topic-link' + (done === total ? ' done-all' : '');
+        a.innerHTML = `
+          <span class="tname">${escapeHtml(g.topic)}</span>
+          <div class="topic-track"><div class="topic-fill" style="width:${pct}%"></div></div>
+          <div class="tmeta"><span>${done}/${total}</span><span>${pct}%</span></div>
+        `;
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          const target = document.getElementById('grp-' + slug(g.topic));
+          if (target) {
+            target.open = true;
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+        side.appendChild(a);
+      });
+    }
+
+    function slug(s) {
+      return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    }
+
+    function buildProblemList(openIds = null) {
+      const wrap = document.createElement('div');
+      let anyVisible = false;
+      groupByTopic(ALL).forEach(g => {
+        const visibleRows = g.rows.filter(passesFilter);
+        if (!visibleRows.length) return;
+        anyVisible = true;
+        const done = g.rows.filter(r => r.done).length;
+        const total = g.rows.length;
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        const det = document.createElement('details');
+        det.className = 'topic-group';
+        det.id = 'grp-' + slug(g.topic);
+        det.open = openIds ? openIds.has(det.id) : false;
+        const summary = document.createElement('summary');
+        summary.innerHTML = `
+          <span class="chev">▶</span>
+          <span class="name">${escapeHtml(g.topic)}</span>
+          <div class="mini-track"><div class="mini-fill" style="width:${pct}%"></div></div>
+          <span class="count">${done}/${total}</span>
+        `;
+        det.appendChild(summary);
+        g.rows.forEach(r => {
+          const visible = passesFilter(r);
+          const row = document.createElement('div');
+          row.className = 'prob-row' + (visible ? '' : ' hide');
+          row.dataset.id = r.id;
+          row.innerHTML = `
+            <div class="chk ${r.done ? 'checked' : ''}" data-id="${r.id}" aria-label="toggle ${escapeHtml(r.problem)}"></div>
+            <div class="diffdot ${r.difficulty}"></div>
+            <div class="prob-name ${r.done ? 'done' : ''}">${escapeHtml(r.problem)}</div>
+            <div class="links">
+              <a class="linkbtn lc" href="${escapeAttr(r.leetcode)}" target="_blank" rel="noopener noreferrer">LC</a>
+              <a class="linkbtn sol" href="${escapeAttr(r.solution)}" target="_blank" rel="noopener noreferrer">Soln</a>
+            </div>
+          `;
+          det.appendChild(row);
+        });
+        wrap.appendChild(det);
+      });
+      if (!anyVisible) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.textContent = 'No problems match your filters.';
+        wrap.appendChild(empty);
+      }
+      return wrap;
+    }
+
+    document.addEventListener('click', (e) => {
+      const chk = e.target.closest('.chk');
+      if (chk) {
+        toggleDone(Number(chk.dataset.id));
+        return;
+      }
+      const diffPill = e.target.closest('#diffPills .pill');
+      if (diffPill) {
+        document.querySelectorAll('#diffPills .pill').forEach(p => {
+          p.classList.remove('active', 'all');
+        });
+        diffPill.classList.add('active');
+        if (diffPill.dataset.diff === 'all') diffPill.classList.add('all');
+        filters.diff = diffPill.dataset.diff;
+        render();
+      }
+    });
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      filters.q = e.target.value.trim().toLowerCase();
+      render();
+    });
+
+    function toggleDone(id) {
+      const row = ALL.find(r => r.id === id);
+      if (!row) return;
+      const openIds = new Set(Array.from(document.querySelectorAll('details.topic-group[open]')).map(d => d.id));
+      row.done = !row.done;
+      render(openIds);
+      fetch(SCRIPT_URL + '?action=update&id=' + id + '&done=' + row.done).catch(() => {
+        const box = document.getElementById('alertBox');
+        box.innerHTML = '<div class="err">Couldn\'t save to your sheet. The visual change is still shown locally.</div>';
+        setTimeout(() => box.innerHTML = '', 4000);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+    function escapeAttr(str) { return escapeHtml(str); }
+    boot();
+  </script>
+  <footer style="text-align:center;color:var(--text-faint);font:600 12px var(--mono);padding:8px 0 18px;">pranavhv</footer>
+</body>
+</html>
